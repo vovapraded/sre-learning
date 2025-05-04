@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: node-service
+  namespace: metrics
+spec:
+  serviceName: node-service
+  replicas: 2
+  selector:
+    matchLabels:
+      app: node-service
+  template:
+    metadata:
+      labels:
+        app: node-service
+    spec:
+      serviceAccountName: metrics-sa  # Указываем сервисный аккаунт
+      volumes:
+        - name: config
+          emptyDir: {}
+      initContainers:
+        - name: wait-and-generate-url
+          image: alpine
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          command:
+            - sh
+            - -c
+            - |
+              apk add --no-cache netcat-openbsd
+              INDEX=$(echo "$POD_NAME" | awk -F'-' '{print $NF}')
+              HOST="postgres-node-${INDEX}.postgres-node.metrics.svc.cluster.local"
+              echo "Waiting for $HOST:5432..."
+              until nc -z "$HOST" 5432; do
+                echo "Still waiting for $HOST..."
+                sleep 2
+              done
+              echo "export SPRING_DATASOURCE_URL=jdbc:postgresql://$HOST:5432/postgres-node-${INDEX}" > /config/env
+      containers:
+        - name: node
+          image: vovapraded/node-service:0.0.1-arm64
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: db-credentials
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          command:
+            - sh
+            - -c
+            - |
+              echo "Sourcing env..." && \
+              . /config/env && \
+              echo "Starting app with SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL" && \
+              java -jar app.jar
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
