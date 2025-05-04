@@ -1,0 +1,47 @@
+replicaCount: 2
+
+image:
+  repository: vovapraded/node-service
+  tag: "0.0.1-arm64"
+  pullPolicy: Never
+
+serviceAccount:
+  create: false
+  name: metrics-sa
+
+service:
+  type: ClusterIP
+  port: 8080
+
+database:
+  port: 5432
+  prefix: postgres-node
+  namespace: metrics
+  secretName: db-credentials
+
+spring:
+  datasource:
+    baseName: postgres-node
+
+readinessProbe:
+  path: /actuator/health
+  initialDelaySeconds: 10
+  periodSeconds: 5
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: node.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+

@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: node-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bank
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  cloud:
+    kubernetes:
+      discovery:
+        enabled: true
+        all-namespaces: false
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+springdoc:
+  swagger-ui:
+    url: http://localhost:8080/v3/api-docs
+    config-url: http://localhost:8080/v3/api-docs/swagger-config
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
+
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+
