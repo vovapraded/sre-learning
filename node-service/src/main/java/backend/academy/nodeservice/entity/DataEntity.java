@@ -1,4 +1,4 @@
-package backend.academy.nodeservice.model;
+package backend.academy.nodeservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,9 +15,9 @@ public class DataEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "data_key", unique = true, nullable = false)
     private String key;
 
-    @Column(nullable = false)
+    @Column(name = "data_value", nullable = false)
     private String value;
 }

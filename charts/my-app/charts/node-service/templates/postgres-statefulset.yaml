@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-node
+  namespace: {{ .Release.Namespace }}
+spec:
+  clusterIP: None
+  selector:
+    app: postgres-node
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-node
+  namespace: {{ .Release.Namespace }}
+spec:
+  serviceName: postgres-node
+  replicas: {{ .Values.postgres.replicas }}
+  selector:
+    matchLabels:
+      app: postgres-node
+  template:
+    metadata:
+      labels:
+        app: postgres-node
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:{{ .Values.postgres.version }}
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.auth.username }}
+            - name: POSTGRES_PASSWORD
+              value: {{ .Values.postgres.auth.password }}
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", {{ .Values.postgres.auth.username | quote }}]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.postgres.storage }}

@@ -1,0 +1,47 @@
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.kubernetes: DEBUG  # Увеличьте уровень логов для отладки
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    kubernetes:
+      client:
+        namespace: metrics
+      discovery:
+        metadata:
+          labels:
+            spring-cloud.kubernetes.discovery.enabled: "true"
+        enabled: true
+        all-namespaces: false
+        namespace: metrics
+        include-not-ready-addresses: true
+        include-headless-services: true
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    enabled:
+      all: true
+  metrics.tags.application: ${spring.application.name}
+
+springdoc:
+  swagger-ui:
+    url: /v3/api-docs
+    config-url: /v3/api-docs/swagger-config
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json

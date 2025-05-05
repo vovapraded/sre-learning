@@ -1,6 +1,6 @@
 package backend.academy.nodeservice.controller;
 
-import backend.academy.nodeservice.dto.DataRequest;
+import backend.academy.nodeservice.dto.DataDto;
 import backend.academy.nodeservice.service.DataService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,7 +28,7 @@ public class DataController {
     @PostMapping
     public ResponseEntity<Void> create(
             @Valid @RequestBody
-            @Parameter(description = "Ключ и значение для сохранения") DataRequest request) {
+            @Parameter(description = "Ключ и значение для сохранения") DataDto request) {
         dataService.saveAndReplicate(request);
         return ResponseEntity.accepted().build();
     }
@@ -41,7 +41,7 @@ public class DataController {
     @PostMapping("/internal/replicate")
     public ResponseEntity<Void> replicate(
             @Valid @RequestBody
-            @Parameter(description = "Ключ и значение, полученные от других нод") DataRequest request) {
+            @Parameter(description = "Ключ и значение, полученные от других нод") DataDto request) {
         dataService.replicateOnly(request);
         return ResponseEntity.ok().build();
     }
@@ -52,7 +52,7 @@ public class DataController {
             @ApiResponse(responseCode = "404", description = "Ключ не найден")
     })
     @GetMapping("/{key}")
-    public ResponseEntity<String> get(
+    public ResponseEntity<DataDto> get(
             @PathVariable
             @Parameter(description = "Ключ для получения значения") String key) {
         return ResponseEntity.ok(dataService.getValueByKey(key));

@@ -1,0 +1,7 @@
+postgres:
+  replicas: 2
+  version: "15"
+  auth:
+    username: user
+    password: pass
+  storage: 1Gi

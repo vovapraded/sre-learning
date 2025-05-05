@@ -1,37 +1,47 @@
 spring:
   application:
     name: node-service
-  datasource:
-    url: jdbc:postgresql://localhost:5432/bank
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
+
+
 
   jpa:
     hibernate:
       ddl-auto: update
     open-in-view: false
+    properties:
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+
   cloud:
     kubernetes:
       discovery:
         enabled: true
         all-namespaces: false
+        namespace: metrics
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics,prometheus  # 👈 обязательно
   endpoint:
     health:
       show-details: always
+    prometheus:
+      access: unrestricted
+  metrics:
+    enable:
+        all: true  # 👈 включает ВСЕ метрики, включая JVM, http, executor, и т.д.
+
+# (опционально) Micrometer tag common (можно в Grafana фильтровать по service)
+management.metrics.tags.application: ${spring.application.name}
+
 springdoc:
   swagger-ui:
     url: http://localhost:8080/v3/api-docs
     config-url: http://localhost:8080/v3/api-docs/swagger-config
+    enabled: false
   default-produces-media-type: application/json
   default-consumes-media-type: application/json
-
   api-docs:
     path: /v3/api-docs
-    enabled: true
-
+    enabled: false

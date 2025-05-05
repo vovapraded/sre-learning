@@ -1,6 +1,6 @@
 package backend.academy.nodeservice.repository;
 
-import backend.academy.nodeservice.model.DataEntity;
+import backend.academy.nodeservice.entity.DataEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -1,0 +1,222 @@
+node-service:
+  replicaCount: 2
+  serviceAccount:
+    name: metrics-sa
+  image:
+    repository: vovapraded/node-service
+    tag: "0.0.1"
+  service:
+    port: 8080
+    type: ClusterIP
+  livenessProbe:
+    httpGet:
+      path: /actuator/health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  readinessProbe:
+    httpGet:
+      path: /actuator/health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  ingress:
+    enabled: false
+
+
+
+
+gateway-service:
+  serviceAccount:
+    name: metrics-sa
+  image:
+    repository: vovapraded/gateway-service
+    tag: "0.0.1"
+  service:
+    port: 8080
+    type: ClusterIP
+  autoscaling:
+    enabled: false
+  ingress:
+    enabled: false
+  livenessProbe:
+    httpGet:
+      path: /actuator/health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  readinessProbe:
+    httpGet:
+      path: /actuator/health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 5
+
+kube-prometheus-stack:
+  kube-state-metrics:
+    podAnnotations:
+      sidecar.istio.io/inject: "false"
+
+  prometheusOperator:
+    admissionWebhooks:
+      patch:
+        podAnnotations:
+          sidecar.istio.io/inject: "false"
+
+  grafana:
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: 'default'
+            orgId: 1
+            folder: ''
+            type: file
+            disableDeletion: false
+            editable: true
+            options:
+              path: /var/lib/grafana/dashboards/default
+      dashboardsConfigMaps:
+        default: "my-app-grafana-dashboards-default"
+    enabled: true
+    adminPassword: admin
+    defaultDashboardsEnabled: false
+    label: grafana_dashboard
+    labelValue: "1"
+    searchNamespace: ALL
+    dashboards:
+      default:
+        spring-boot-statistics:
+          gnetId: 4701
+          revision: 1
+          datasource: Prometheus
+        custom-red-golden:
+
+          json: |-
+            {
+              "title": "Spring Boot RED + Golden Signals",
+              "uid": "custom-red-golden",
+              "schemaVersion": 27,
+              "version": 1,
+              "editable": true,
+              "panels": [
+                {
+                  "type": "timeseries",
+                  "title": "GET Request Rate",
+                  "datasource": "Prometheus",
+                  "id": 1,
+                  "gridPos": { "x": 0, "y": 0, "w": 24, "h": 8 },
+                  "targets": [
+                    { "expr": "rate(get_by_key_requests_total{pod_name=~\"$pod\"}[1m])", "refId": "A" }
+                  ]
+                },
+                {
+                  "type": "timeseries",
+                  "title": "GET Error Rate",
+                  "datasource": "Prometheus",
+                  "id": 2,
+                  "gridPos": { "x": 0, "y": 8, "w": 24, "h": 8 },
+                  "targets": [
+                    { "expr": "rate(get_by_key_errors_total{pod_name=~\"$pod\"}[1m])", "refId": "A" }
+                  ]
+                },
+                {
+                  "type": "timeseries",
+                  "title": "GET Latency P99",
+                  "datasource": "Prometheus",
+                  "id": 3,
+                  "gridPos": { "x": 0, "y": 16, "w": 24, "h": 8 },
+                  "targets": [
+                    {
+                      "expr": "histogram_quantile(0.99, rate(get_by_key_latency_bucket{pod_name=~\"$pod\"}[1m]))",
+                      "refId": "A"
+                    }
+                  ]
+                },
+                {
+                  "type": "timeseries",
+                  "title": "Save Request Rate",
+                  "datasource": "Prometheus",
+                  "id": 4,
+                  "gridPos": { "x": 0, "y": 24, "w": 24, "h": 8 },
+                  "targets": [
+                    { "expr": "rate(save_requests_total{pod_name=~\"$pod\"}[1m])", "refId": "A" }
+                  ]
+                },
+                {
+                  "type": "timeseries",
+                  "title": "Save Latency P99",
+                  "datasource": "Prometheus",
+                  "id": 5,
+                  "gridPos": { "x": 0, "y": 32, "w": 24, "h": 8 },
+                  "targets": [
+                    {
+                      "expr": "histogram_quantile(0.99, rate(save_latency_bucket{pod_name=~\"$pod\"}[1m]))",
+                      "refId": "A"
+                    }
+                  ]
+                },
+                {
+                  "type": "timeseries",
+                  "title": "Replication Success Rate",
+                  "datasource": "Prometheus",
+                  "id": 6,
+                  "gridPos": { "x": 0, "y": 40, "w": 24, "h": 8 },
+                  "targets": [
+                    { "expr": "rate(replication_success_total{pod_name=~\"$pod\"}[1m])", "refId": "A" }
+                  ]
+                },
+                {
+                  "type": "timeseries",
+                  "title": "Replication Failure Rate",
+                  "datasource": "Prometheus",
+                  "id": 7,
+                  "gridPos": { "x": 0, "y": 48, "w": 24, "h": 8 },
+                  "targets": [
+                    { "expr": "rate(replication_failure_total{pod_name=~\"$pod\"}[1m])", "refId": "A" }
+                  ]
+                },
+                {
+                  "type": "timeseries",
+                  "title": "Replication Latency P99",
+                  "datasource": "Prometheus",
+                  "id": 8,
+                  "gridPos": { "x": 0, "y": 56, "w": 24, "h": 8 },
+                  "targets": [
+                    {
+                      "expr": "histogram_quantile(0.99, rate(replication_latency_bucket{pod_name=~\"$pod\"}[1m]))",
+                      "refId": "A"
+                    }
+                  ]
+                }
+              ],
+              "time": {
+                "from": "now-6h",
+                "to": "now"
+              },
+              "templating": {
+                "list": [
+                  {
+                    "name": "pod",
+                    "type": "query",
+                    "datasource": "Prometheus",
+                    "refresh": 1,
+                    "query": "label_values(get_by_key_requests_total, pod_name)",
+                    "includeAll": true,
+                    "multi": true,
+                    "sort": 1
+                  }
+                ]
+              }
+            }
+
+  prometheus:
+    prometheusSpec:
+      serviceMonitorSelectorNilUsesHelmValues: false
+      serviceMonitorSelector: { }
+      podMonitorSelector: { }
+
+serviceMonitor:
+  enabled: true
+  labels:
+    release: my-app

@@ -1,0 +1,64 @@
+apiVersion: skaffold/v4beta6
+kind: Config
+
+build:
+  artifacts:
+    - image: vovapraded/node-service
+      context: node-service
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: 'target/*.jar'
+            dest: /app/app.jar
+
+
+
+    - image: vovapraded/gateway-service
+      context: ./gateway-service
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: 'target/*.jar'
+            dest: /app/app.jar
+
+
+deploy:
+  helm:
+    flags:
+      install:
+        - --timeout=600s
+      upgrade:
+        - --timeout=600s
+    releases:
+      - name: my-app
+        chartPath: charts/my-app
+        namespace: metrics
+        createNamespace: true
+        valuesFiles:
+          - charts/my-app/values.yaml
+        setValues:
+          node-service.image.repository: vovapraded/node-service
+          node-service.image.tag: latest
+
+
+portForward:
+  - resourceType: service
+    resourceName: my-app-gateway-service
+    namespace: metrics
+    port: 8080
+    localPort: 8080
+
+  - resourceType: service
+    resourceName: my-app-grafana
+    namespace: metrics
+    port: 80
+    localPort: 3000
+
+  - resourceType: service
+    resourceName: my-app-kube-prometheus-sta-prometheus
+    namespace: metrics
+    port: 9090
+    localPort: 9090
+

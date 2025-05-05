@@ -1,0 +1,10 @@
+apiVersion: v2
+name: node-service
+version: 0.1.0
+type: application
+appVersion: "0.0.1"
+dependencies:
+  - name: postgresql
+    version: 12.1.7
+    repository: https://charts.bitnami.com/bitnami
+    alias: postgres

@@ -1,0 +1,12 @@
+dependencies:
+- name: node-service
+  repository: ""
+  version: 0.1.0
+- name: gateway-service
+  repository: ""
+  version: 0.1.0
+- name: kube-prometheus-stack
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 56.6.2
+digest: sha256:b21b51f2fdb55126525984022becfdbe1588d0624b1f9b2e79e1ce2ea7daa81c
+generated: "2025-05-08T16:04:21.491973+03:00"
